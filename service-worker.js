@@ -1,19 +1,5 @@
-const CACHE_NAME = 'albahith-cache-v2';
-const ASSETS = ['./','./index.html','./manifest.webmanifest','./service-worker.js'];
-self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
-  self.skipWaiting();
-});
-self.addEventListener('activate', event => {
-  event.waitUntil(self.clients.claim());
-});
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-  event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
-      const copy = response.clone();
-      caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-      return response;
-    }).catch(() => caches.match('./index.html')))
-  );
-});
+const CACHE='albahith-v2-cache';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./service-worker.js','./icon-192.png','./icon-512.png'];
+self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));self.skipWaiting();});
+self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim());});
+self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{const copy=res.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));return res;}).catch(()=>caches.match('./index.html'))));});
