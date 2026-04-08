@@ -97,7 +97,7 @@
       </div>
       <div class="panel">
         <div class="mini-title">وصف العنصر</div>
-        <div class="label">اكتب وصفًا دقيقًا للشيء الذي تريد البحث عنه</div>
+        <div class="label">اكتب وصفًا دقيقًا للشيء الذي تريد البحث عنه، ويمكنك استخدام هذا الخيار للأشياء غير الموجودة في القوائم أيضًا</div>
         <textarea id="descriptionInput" placeholder="مثال: قطعة ذهب صغيرة قرب صخرة كبيرة في الجهة الشمالية"></textarea>
         <div class="meta-row">
           <div class="badge">يتم إنشاء رقم تلقائي لكل عنصر جديد</div>
@@ -205,7 +205,9 @@ const groups = [
   {title:'الأماكن والتضاريس',hint:'مواقع واتجاهات طبيعية',items:[
     {code:700,name:'ماء',icon:'drop'},{code:800,name:'مكان',icon:'pin'},{code:900,name:'مدفن',icon:'temple'},{code:1000,name:'غرفة',icon:'door'},{code:1200,name:'وادي',icon:'mount'},{code:1300,name:'اتجاه',icon:'compass'},{code:1400,name:'حفرة',icon:'ring'},{code:1800,name:'جبل',icon:'mount'}]},
   {title:'الكائنات والطبيعة',hint:'شجر وحيوان وإنسان',items:[
-    {code:1100,name:'شجر',icon:'tree'},{code:1500,name:'حيوان',icon:'paw'},{code:1600,name:'إنسان',icon:'person'},{code:1900,name:'قبر',icon:'cross'},{code:2000,name:'فقع',icon:'leaf'},{code:2100,name:'مزرعة',icon:'home'}]}
+    {code:1100,name:'شجر',icon:'tree'},{code:1500,name:'حيوان',icon:'paw'},{code:1600,name:'إنسان',icon:'person'},{code:1900,name:'قبر',icon:'cross'},{code:2000,name:'فقع',icon:'leaf'},{code:2100,name:'مزرعة',icon:'home'}]},
+  {title:'بحث حر',hint:'للعناصر غير الموجودة في القائمة',items:[
+    {code:9900,name:'ابحث عن أي شيء',icon:'spark'}]}
 ];
 
 let selectedCategory = null, pendingItem = null, currentSession = null, timer = null, secondsElapsed = 0, timerRunning = false;
@@ -237,7 +239,8 @@ function iconSvg(type){
     person:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M6 19c1.5-3 4-4.5 6-4.5S16.5 16 18 19"/></svg>',
     cross:'<svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M8 9h8"/></svg>',
     leaf:'<svg viewBox="0 0 24 24"><path d="M19 5c-7 0-12 4-12 10 0 3 2 5 5 5 6 0 10-5 10-12 0-1-.5-3-3-3Z"/><path d="M9 14c2-1 5-3 8-6"/></svg>',
-    home:'<svg viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 10v10h12V10"/></svg>'
+    home:'<svg viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 10v10h12V10"/></svg>',
+    spark:'<svg viewBox="0 0 24 24"><path d="M12 3v5"/><path d="M12 16v5"/><path d="M4.9 4.9l3.5 3.5"/><path d="M15.6 15.6l3.5 3.5"/><path d="M3 12h5"/><path d="M16 12h5"/><path d="M4.9 19.1l3.5-3.5"/><path d="M15.6 8.4l3.5-3.5"/><circle cx="12" cy="12" r="2.2"/></svg>'
   };
   return icons[type] || icons.pin;
 }
