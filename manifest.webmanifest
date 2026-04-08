@@ -1,0 +1,12 @@
+{
+  "name": "الباحث الاستشعاري",
+  "short_name": "الباحث",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f7f8",
+  "theme_color": "#0f766e",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": []
+}

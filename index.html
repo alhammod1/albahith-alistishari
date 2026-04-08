@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f766e" />
+  <title>الباحث الاستشعاري</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <style>
+    :root{
+      --bg:#f4f7f8;--surface:#ffffff;--surface-2:#eef5f5;--text:#102a2a;--muted:#5f7676;--border:#d6e3e2;
+      --primary:#0f766e;--primary-2:#115e59;--danger:#b42318;--success:#137333;--warning:#b76e00;
+      --radius:20px;--shadow:0 10px 30px rgba(15,118,110,.10);
+    }
+    *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--text)}
+    .app{max-width:760px;margin:0 auto;min-height:100vh;padding:20px 16px 100px}
+    .header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+    .title{font-size:30px;font-weight:800}.subtitle{color:var(--muted);margin-top:6px;font-size:15px}
+    .chip{background:var(--surface);border:1px solid var(--border);padding:10px 14px;border-radius:999px;font-size:13px;color:var(--muted)}
+    .tabs{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+    .tab{border:none;background:none;padding:10px;border-radius:16px;color:var(--muted);font-size:13px}.tab.active{background:#e2f1f0;color:var(--primary);font-weight:700}
+    .screen{display:none}.screen.active{display:block}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(106px,1fr));gap:14px}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);padding:16px;text-align:center;cursor:pointer}
+    .icon{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;margin:0 auto 10px;background:#e5f3f2;color:var(--primary);font-size:28px}
+    .name{font-weight:700}.code{font-size:12px;color:var(--muted);margin-top:6px}
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:24px;box-shadow:var(--shadow);padding:18px;margin-top:16px}
+    .label{font-size:14px;color:var(--muted);margin-bottom:8px}.input, .search-box{width:100%;padding:15px 16px;border-radius:18px;border:1px solid var(--border);background:#fff;font-size:16px;outline:none}
+    .input:focus,.search-box:focus{border-color:var(--primary)}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}.btn{border:none;border-radius:18px;padding:14px 18px;font-size:16px;font-weight:700;cursor:pointer}
+    .btn.primary{background:var(--primary);color:#fff}.btn.secondary{background:#edf5f4;color:var(--primary)}.btn.ghost{background:#fff;border:1px solid var(--border);color:var(--text)}.btn.danger{background:#fff1f1;color:var(--danger)}
+    .searching{display:grid;place-items:center;padding:26px 0}
+    .spinner{width:112px;height:112px;border-radius:999px;border:8px solid #dceeed;border-top-color:var(--primary);animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .timer{font-size:40px;font-weight:800;margin-top:20px;font-variant-numeric:tabular-nums}
+    .result-btns{display:grid;grid-template-columns:1fr;gap:12px;margin-top:18px}
+    .item{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:14px 16px;margin-bottom:12px}
+    .item h4{margin:0 0 8px}.muted{color:var(--muted);font-size:14px}.empty{padding:28px 18px;text-align:center;color:var(--muted)}
+    .modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;place-items:center;padding:18px}.modal-wrap.show{display:grid}.modal{background:#fff;border-radius:24px;max-width:420px;width:100%;padding:22px;box-shadow:0 18px 60px rgba(0,0,0,.2)}
+    .modal-title{font-size:20px;font-weight:800;margin-bottom:10px}.modal-text{color:var(--muted);line-height:1.7}
+    .topline{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.badge{background:#edf5f4;color:var(--primary);padding:8px 12px;border-radius:999px;font-size:13px;font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section id="home" class="screen active">
+      <div class="header">
+        <div>
+          <div class="title">الباحث الاستشعاري</div>
+          <div class="subtitle">اختر فئة رئيسية ثم اكتب وصف الشيء المراد البحث عنه</div>
+        </div>
+        <div class="chip">PWA</div>
+      </div>
+      <div id="categoriesGrid" class="grid"></div>
+    </section>
+
+    <section id="category" class="screen">
+      <div class="topline">
+        <button class="btn ghost" onclick="goHome()">رجوع</button>
+        <div class="badge" id="selectedCategoryBadge"></div>
+      </div>
+      <div class="panel">
+        <div class="label">اكتب وصف الشيء الذي تريد البحث عنه</div>
+        <textarea id="descriptionInput" class="input" rows="4" placeholder="مثال: ذهب خام قطعة صغيرة"></textarea>
+        <div class="actions">
+          <button class="btn primary" onclick="prepareSearch()">متابعة</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="running" class="screen">
+      <div class="topline">
+        <button class="btn ghost" onclick="cancelRunningToHome()">الرئيسية</button>
+        <div class="badge" id="runningCode"></div>
+      </div>
+      <div class="panel">
+        <div class="label">العنصر المختار</div>
+        <div class="title" id="runningTitle" style="font-size:26px"></div>
+        <div class="subtitle" id="runningSubtitle"></div>
+        <div class="searching">
+          <div class="spinner"></div>
+          <div class="timer" id="timerText">00:00</div>
+        </div>
+        <div class="actions">
+          <button class="btn secondary" id="pauseBtn" onclick="toggleTimer()">إيقاف</button>
+          <button class="btn primary" onclick="finishSearch()">إنهاء</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="result" class="screen">
+      <div class="topline">
+        <button class="btn ghost" onclick="goHome()">الرئيسية</button>
+        <div class="badge">نتيجة البحث</div>
+      </div>
+      <div class="panel">
+        <div class="title" style="font-size:26px">انتهى البحث</div>
+        <div class="subtitle" id="resultTitle"></div>
+        <div class="subtitle" id="resultTime" style="margin-top:10px"></div>
+        <div class="result-btns">
+          <button class="btn primary" onclick="setResult(true)">تم إيجاد شيء</button>
+          <button class="btn danger" onclick="setResult(false)">لم يتم إيجاد شيء</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="codeSearch" class="screen">
+      <div class="header">
+        <div>
+          <div class="title" style="font-size:26px">البحث بالرقم</div>
+          <div class="subtitle">أدخل رقم العنصر المحفوظ مسبقًا</div>
+        </div>
+      </div>
+      <div class="panel">
+        <input id="codeInput" class="search-box" inputmode="numeric" placeholder="مثال: 1001" />
+        <div class="actions">
+          <button class="btn primary" onclick="searchByCode()">بحث</button>
+        </div>
+        <div id="codeSearchResult" style="margin-top:16px"></div>
+      </div>
+    </section>
+
+    <section id="history" class="screen">
+      <div class="header">
+        <div>
+          <div class="title" style="font-size:26px">السجل</div>
+          <div class="subtitle">الأحدث أولًا</div>
+        </div>
+      </div>
+      <div id="historyList"></div>
+    </section>
+  </div>
+
+  <div id="confirmModal" class="modal-wrap">
+    <div class="modal">
+      <div class="modal-title">تأكيد البحث</div>
+      <div class="modal-text" id="confirmText"></div>
+      <div class="actions" style="margin-top:18px">
+        <button class="btn ghost" onclick="closeConfirm()">إلغاء</button>
+        <button class="btn primary" onclick="confirmSearch()">تأكيد</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="tabs">
+    <button class="tab active" data-target="home" onclick="switchTab('home', this)">الرئيسية</button>
+    <button class="tab" data-target="codeSearch" onclick="switchTab('codeSearch', this)">بحث بالرقم</button>
+    <button class="tab" data-target="history" onclick="switchTab('history', this)">السجل</button>
+  </nav>
+
+<script>
+const categories = [
+  {code:100,name:'ذهب',icon:'✨'},{code:200,name:'فضة',icon:'⬡'},{code:300,name:'حديد',icon:'🔨'},{code:400,name:'نحاس',icon:'⚡'},
+  {code:500,name:'ألمنيوم',icon:'📦'},{code:600,name:'رصاص',icon:'💊'},{code:700,name:'ماء',icon:'💧'},{code:800,name:'مكان',icon:'📍'},
+  {code:900,name:'مدفن',icon:'🏛️'},{code:1000,name:'غرفة',icon:'🚪'},{code:1100,name:'شجر',icon:'🌳'},{code:1200,name:'وادي',icon:'⛰️'},
+  {code:1300,name:'اتجاه',icon:'🧭'},{code:1400,name:'حفرة',icon:'⭕'},{code:1500,name:'حيوان',icon:'🐾'},{code:1600,name:'إنسان',icon:'👤'},
+  {code:1700,name:'حجر',icon:'◼️'},{code:1800,name:'جبل',icon:'🏔️'},{code:1900,name:'قبر',icon:'✝️'},{code:2000,name:'فقع',icon:'🍃'},{code:2100,name:'مزرعة',icon:'🏡'}
+];
+
+let selectedCategory = null;
+let pendingItem = null;
+let currentSession = null;
+let timer = null;
+let secondsElapsed = 0;
+let timerRunning = false;
+
+const store = {
+  getItems(){ return JSON.parse(localStorage.getItem('search_items')||'[]'); },
+  setItems(v){ localStorage.setItem('search_items', JSON.stringify(v)); },
+  getSessions(){ return JSON.parse(localStorage.getItem('search_sessions')||'[]'); },
+  setSessions(v){ localStorage.setItem('search_sessions', JSON.stringify(v)); }
+};
+
+function renderCategories(){
+  const grid = document.getElementById('categoriesGrid');
+  grid.innerHTML = categories.map(cat => `
+    <button class="card" onclick='openCategory(${JSON.stringify(cat)})'>
+      <div class="icon">${cat.icon}</div>
+      <div class="name">${cat.name}</div>
+      <div class="code">${cat.code}</div>
+    </button>
+  `).join('');
+}
+
+function switchScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='history') renderHistory();
+}
+
+function switchTab(id, el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  switchScreen(id);
+}
+
+function goHome(){
+  closeConfirm();
+  stopTimer(true);
+  switchScreen('home');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.tab[data-target="home"]').classList.add('active');
+}
+
+function openCategory(cat){
+  selectedCategory = cat;
+  document.getElementById('selectedCategoryBadge').textContent = `${cat.name} - ${cat.code}`;
+  document.getElementById('descriptionInput').value = '';
+  switchScreen('category');
+}
+
+function getNextCode(categoryCode){
+  const items = store.getItems();
+  const related = items.filter(i => String(i.code).startsWith(String(categoryCode))).map(i => i.code);
+  return (related.length ? Math.max(...related) : categoryCode * 10) + 1;
+}
+
+function prepareSearch(){
+  const text = document.getElementById('descriptionInput').value.trim();
+  if(!selectedCategory || !text){ alert('اكتب وصف الشيء أولاً'); return; }
+  const items = store.getItems();
+  const existing = items.find(i => i.categoryCode===selectedCategory.code && i.queryText===text);
+  pendingItem = existing || {
+    code:getNextCode(selectedCategory.code),
+    categoryCode:selectedCategory.code,
+    categoryName:selectedCategory.name,
+    queryText:text,
+    fullText:`${selectedCategory.name} - ${text}`,
+    createdAt:new Date().toISOString(),
+    isCustom:true
+  };
+  document.getElementById('confirmText').textContent = `هل تريد فعلاً البحث عن ${pendingItem.queryText}؟`;
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function closeConfirm(){ document.getElementById('confirmModal').classList.remove('show'); }
+
+function confirmSearch(){
+  closeConfirm();
+  let items = store.getItems();
+  if(!items.find(i=>i.code===pendingItem.code)){
+    items.unshift(pendingItem);
+    store.setItems(items);
+  }
+  currentSession = {itemCode:pendingItem.code,categoryName:pendingItem.categoryName,fullText:pendingItem.fullText,startedAt:new Date().toISOString(),endedAt:null,durationSeconds:0,resultFound:null};
+  document.getElementById('runningCode').textContent = `رقم العنصر: ${pendingItem.code}`;
+  document.getElementById('runningTitle').textContent = pendingItem.categoryName;
+  document.getElementById('runningSubtitle').textContent = pendingItem.queryText;
+  secondsElapsed = 0; updateTimerText(); startTimer(); switchScreen('running');
+}
+
+function startTimer(){
+  stopTimer(false);
+  timerRunning = true;
+  document.getElementById('pauseBtn').textContent = 'إيقاف';
+  timer = setInterval(()=>{ secondsElapsed++; updateTimerText(); },1000);
+}
+function stopTimer(reset){
+  clearInterval(timer); timer=null; timerRunning=false;
+  document.getElementById('pauseBtn').textContent = 'استئناف';
+  if(reset){ secondsElapsed=0; updateTimerText(); }
+}
+function toggleTimer(){ if(timerRunning){ stopTimer(false); } else { startTimer(); } }
+function updateTimerText(){ const m=String(Math.floor(secondsElapsed/60)).padStart(2,'0'); const s=String(secondsElapsed%60).padStart(2,'0'); document.getElementById('timerText').textContent=`${m}:${s}`; }
+
+function finishSearch(){
+  stopTimer(false);
+  currentSession.endedAt = new Date().toISOString();
+  currentSession.durationSeconds = secondsElapsed;
+  document.getElementById('resultTitle').textContent = currentSession.fullText;
+  document.getElementById('resultTime').textContent = `المدة: ${document.getElementById('timerText').textContent}`;
+  switchScreen('result');
+}
+
+function setResult(found){
+  currentSession.resultFound = found;
+  const sessions = store.getSessions();
+  sessions.unshift(currentSession);
+  store.setSessions(sessions);
+  renderHistory();
+  goHome();
+}
+
+function searchByCode(){
+  const code = parseInt(document.getElementById('codeInput').value,10);
+  const result = document.getElementById('codeSearchResult');
+  const item = store.getItems().find(i=>i.code===code);
+  if(!item){ result.innerHTML = `<div class="empty">لم يتم العثور على عنصر بهذا الرقم</div>`; return; }
+  result.innerHTML = `
+    <div class="item">
+      <h4>${item.fullText}</h4>
+      <div class="muted">رقم العنصر: ${item.code}</div>
+      <div class="actions"><button class="btn primary" onclick='runExisting(${JSON.stringify(item)})'>بدء البحث</button></div>
+    </div>`;
+}
+
+function runExisting(item){ pendingItem = item; confirmSearch(); }
+function cancelRunningToHome(){ goHome(); }
+
+function renderHistory(){
+  const sessions = store.getSessions();
+  const list = document.getElementById('historyList');
+  if(!sessions.length){ list.innerHTML = `<div class="panel empty">لا يوجد سجل بعد</div>`; return; }
+  list.innerHTML = sessions.map(s => `
+    <div class="item">
+      <h4>${s.fullText}</h4>
+      <div class="muted">الفئة: ${s.categoryName}</div>
+      <div class="muted">رقم العنصر: ${s.itemCode}</div>
+      <div class="muted">المدة: ${fmt(s.durationSeconds)}</div>
+      <div class="muted" style="color:${s.resultFound ? '#137333' : '#b42318'}">${s.resultFound ? 'تم العثور' : 'لم يتم العثور'}</div>
+    </div>
+  `).join('');
+}
+function fmt(sec){ const m=String(Math.floor(sec/60)).padStart(2,'0'); const s=String(sec%60).padStart(2,'0'); return `${m}:${s}`; }
+
+if('serviceWorker' in navigator){ window.addEventListener('load',()=> navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); }
+renderCategories(); renderHistory();
+</script>
+</body>
+</html>
